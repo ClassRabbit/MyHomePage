@@ -2,7 +2,7 @@ extends ../layout
 
 block content
   .container
-    form.form-signin(action='/signIn', method='POST')
+    form.form-signin(action='/login', method='POST')
       .row
         .col-md-2
           label(for='email') Email
@@ -18,6 +18,6 @@ block content
       button.btn.btn-lg.btn-primary.btn-block(type='submit') 로그인
       | 
       hr
-      a.btn.btn-default.btn-mini(href='/signUp') 회원가입
+      a.btn.btn-default.btn-mini(href='/signup') 회원가입
       | 
-      a.btn.btn-default.btn-mini.pwResetBtn(href='/password') 비밀번호 찾기
+      a.btn.btn-default.btn-mini.pwResetBtn(href='#') 비밀번호 찾기

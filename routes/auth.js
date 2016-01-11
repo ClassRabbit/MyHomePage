@@ -1,11 +1,11 @@
 module.exports = function(app, passport) {
-  app.post('/signin', passport.authenticate('local-signin', {
+  app.post('/login', passport.authenticate('local-signin', {
     successRedirect : '/',
-    failureRedirect : '/signin',
+    failureRedirect : '/login',
     failureFlash : true
   }));
 
-  app.get('/signout', function(req, res) {
+  app.get('/logout', function(req, res) {
     req.logout();
     req.flash('success', '로그아웃 되었습니다.');
     res.redirect('/');
