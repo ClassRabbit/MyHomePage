@@ -2,7 +2,16 @@ var express = require('express'),
     User = require('../models/User');
 var router = express.Router();
 
-function confirm(form) {
+function needAuth(req, res, next) {
+  if (req.isAuthenticated()) {
+    next();
+  } else {
+    req.flash('danger', '로그인이 필요합니다.');
+    res.redirect('/login');
+  }
+}
+
+function confirm(form, isFix) {
   var name = form.name || "";
   var email = form.email || "";
   name = name.trim();
@@ -17,18 +26,29 @@ function confirm(form) {
   if (!form.password) {
     return '비밀번호를 입력해주세요.';
   }
-  if (form.password !== form.pwCheck) {
-    return '비밀번호가 일치하지 않습니다.';
+
+  if(isFix) {
+    if (form.newPassword && form.newPassword.length < 4) {
+      return '비밀번호는 4글자 이상이어야 합니다.';
+    }
+    if (form.newPassword && (form.newPassword !== form.pwCheck)) {
+      return '새 비밀번호가 일치하지 않습니다.';
+    }
   }
-  if (form.password.length < 4) {
-    return '비밀번호는 4글자 이상이어야 합니다.';
+  else {
+    if (form.password.length < 4) {
+      return '비밀번호는 4글자 이상이어야 합니다.';
+    }
+    if (form.password !== form.pwCheck) {
+      return '비밀번호가 일치하지 않습니다.';
+    }
   }
   return null;
 }
 
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
+router.get('/', needAuth, function(req, res, next) {
   User.findById(res.locals.currentUser.id, function(err, user) {
     if(err) {
       return next(err);
@@ -71,5 +91,54 @@ router.post('/', function(req, res, next) {
     });
   });
 });
+
+router.put('/', needAuth, function(req, res, next) {
+  var err = confirm(req.body, true);
+  if(err) {
+    req.flash('danger', err);
+    return res.redirect('back');
+  }
+  User.findById(res.locals.currentUser.id, function(err, user) {
+    if(err) {
+      return next(err);
+    }
+    if (!user) {
+      req.flash('danger', '존재하지 않는 사용자입니다.');
+      return res.redirect('back');
+    }
+    if (!user.validatePassword(req.body.password)) {
+      req.flash('danger', '현재 비밀번호가 일치하지 않습니다.');
+      return res.redirect('back');
+    }
+
+    user.name = req.body.name;
+    user.email = req.body.email;
+    if (req.body.newPassword) {
+      user.password = user.generateHash(req.body.newPassword);
+    }
+    user.save(function(err) {
+      if (err) {
+        return next(err);
+      }
+      req.flash('success', '사용자 정보가 변경되었습니다.');
+      res.redirect('/users');
+    });
+  });
+});
+
+router.delete('/', needAuth, function(req, res, next) {
+
+});
+
+router.get('/edit', needAuth, function(req, res, next) {
+  User.findById(res.locals.currentUser.id, function(err, user) {
+    if(err) {
+      return next(err);
+    }
+    res.render('users/edit', {user: user});
+  });
+});
+
+
 
 module.exports = router;
