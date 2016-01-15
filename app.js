@@ -45,14 +45,16 @@ app.use(session({
   saveUninitialized: true,
   secret: 'long-long-long-secret-string-1313513tefgwdsvbjkvasd'
 }));
+app.use(flash());
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(flash());
+
 
 app.use(function(req, res, next) {
   console.log(req.user);
   res.locals.currentUser = req.user;    //유저가 없으면 undifind
+  res.locals.flashMessages = req.flash();
   next();
 });
 
