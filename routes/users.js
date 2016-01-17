@@ -127,7 +127,13 @@ router.put('/', needAuth, function(req, res, next) {
 });
 
 router.delete('/', needAuth, function(req, res, next) {
-
+  User.findOneAndRemove({_id: res.locals.currentUser.id}, function(err, user) {
+    if (err) {
+      return next(err);
+    }
+    req.flash('success', '사용자 계정이 삭제되었습니다.');
+    res.redirect('/');
+  });
 });
 
 router.get('/edit', needAuth, function(req, res, next) {
