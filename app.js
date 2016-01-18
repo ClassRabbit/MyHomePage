@@ -14,6 +14,7 @@ var routeAuth = require('./routes/auth');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var posts = require('./routes/posts');
 var memo = require('./routes/memo');
 
 // MongoDB
@@ -58,10 +59,13 @@ app.use(function(req, res, next) {
   next();
 });
 
+app.locals.moment = require('moment');
+
 configAuth(passport);
 
 app.use('/', routes);
 app.use('/users', users);
+app.use('/posts', posts);
 app.use('/memo', memo);
 
 routeAuth(app, passport);
