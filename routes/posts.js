@@ -1,6 +1,7 @@
 var express = require('express'),
     User = require('../models/User'),
     Post = require('../models/Post');
+    Reply = require('../models/Reply')
 var router = express.Router();
 
 function needAuth(req, res, next) {
@@ -34,7 +35,7 @@ router.post('/', needAuth, function(req, res, next) {
         title: req.body.title,
         content: req.body.content,
         read: 0                                //조회수는 0으로 입력
-      });
+    });
     newPost.save(function(err) {                //post를 DB에 저장
       if (err) {
         return next(err);
@@ -53,7 +54,12 @@ router.get('/:id', function(req, res, next) {
       if (err) {
         return next(err);
       }
-      res.render('posts/view', {post: post});
+      Reply.find({post: post.id}, function(err, replys){
+        if(err){
+          return next(err);
+        }
+        res.render('posts/view', {post: post, replys: replys});
+      });
     });
   });
 });
@@ -102,7 +108,7 @@ router.put('/:id', needAuth, function(req, res, next) {
   });
 });
 
-router.delete('/:id', function(req, res, next) {
+router.delete('/:id', needAuth, function(req, res, next) {
   Post.findById({_id: req.params.id}, function(err, post) {
     if (err) {
       return next(err);
@@ -120,6 +126,48 @@ router.delete('/:id', function(req, res, next) {
           return next(err);
         }
         res.redirect('/posts');
+      });
+    });
+  });
+});
+
+router.post('/:id/reply', needAuth, function(req, res, next) {
+  Post.findById({_id: req.params.id}, function(err, post) {
+    if (err) {
+      return next(err);
+    }
+    var newReply = new Reply({
+      post: post.id,
+      email: res.locals.currentUser.email,
+      content: req.body.reply
+    });
+    newReply.save(function(err) {
+      if (err) {
+        return next(err);
+      }
+      res.redirect('/posts/' + post.id);
+    });
+  });
+});
+
+router.delete('/:id/reply', needAuth, function(req, res, next) {
+  Reply.findById({_id: req.params.id}, function(err, reply) {
+    if (err) {
+      return next(err);
+    }
+    User.findOne({email: reply.email}, function(err, user) {
+      if (err) {
+        return next(err);
+      }
+      if(user.email !== res.locals.currentUser.email) {
+        req.flash('danger', '작성자가 아닙니다.');
+        return res.redirect('back');
+      }
+      reply.remove(function(err){
+        if(err) {
+          return next(err);
+        }
+        res.redirect('back');
       });
     });
   });
