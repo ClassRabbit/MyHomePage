@@ -1,7 +1,7 @@
 var express = require('express'),
     User = require('../models/User'),
-    Post = require('../models/Post');
-    Reply = require('../models/Reply')
+    Post = require('../models/Post'),
+    Reply = require('../models/Reply');
 var router = express.Router();
 
 function needAuth(req, res, next) {

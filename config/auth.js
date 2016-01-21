@@ -1,4 +1,5 @@
 var LocalStrategy = require('passport-local').Strategy,
+    FacebookStrategy = require('passport-facebook').Strategy,
     User = require('../models/User');
 
 module.exports = function(passport) {
@@ -33,4 +34,44 @@ module.exports = function(passport) {
     });
   }));
 
+  passport.use(new FacebookStrategy({
+    clientID : '1520673334895238',
+    clientSecret : '2aa06b1cfbee1a12c086a60c8295cd80',    //App Secret으로 체워넣으세요.
+    callbackURL : 'http://localhost:3000/auth/facebook/callback',
+    profileFields : ["emails", "displayName", "name", "photos"]
+  }, function(token, refreshToken, profile, done) {
+    console.log(profile);
+    var email = profile.emails[0].value;
+    process.nextTick(function () {
+      User.findOne({'facebook.id': profile.id}, function(err, user) {
+        if (err) {
+          return done(err);
+        }
+        if (user) {
+          return done(null, user);
+        } else {
+          User.findOne({email: email}, function(err, user) {
+            if (err) {
+              return done(err);
+            }
+            if (!user) {
+              user = new User({
+                name: profile.displayName,
+                email: profile.emails[0].value
+              });
+            }
+            user.facebook.id = profile.id;
+            user.facebook.token = profile.token;
+            user.facebook.photo = profile.photos[0].value;
+            user.save(function(err) {
+              if (err) {
+                return done(err);
+              }
+              return done(null, user);
+            });
+          });
+        }
+      });
+    });
+  }));
 };
